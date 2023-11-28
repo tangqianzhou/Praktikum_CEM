@@ -1,0 +1,72 @@
+---
+title: "Question 8"
+author: "Daria Moiseeva"
+date: "2023-11-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(tidyr)
+#This graphic shows the different challenges they encounter in different industries.
+data<-read_excel("MUE.2022.for.LMU.xlsx")
+df1 <- data %>% select(SERIAL,A003) #Extract the industry relevant columns
+df2 <-data %>% select(SERIAL, E004_01,E004_02,E004_03,E004_04,E004_05,E004_06,E004_07) #Extract the challenged relevant columns
+df_industry_long <- pivot_longer(df1,cols = -SERIAL,names_to = "industry", values_to = "element")
+df_challenges_long <- pivot_longer(df2,cols = -SERIAL,names_to = "challenge", values_to = "element") 
+df_industry_long <- na.omit(df_industry_long) #Remove all na values
+df_challenges_long <- na.omit(df_challenges_long)
+df_challenges_long #this is result
+df_industry_long
+df_challenges_long <- df_challenges_long[df_challenges_long$element ==TRUE,]
+merged_df <- merge(df_industry_long, df_challenges_long, by ="SERIAL")
+merged_df
+replacement_map <- c("1"="Construction industry",
+                     "2"="Mining/Metal",
+                     "3"="Education/continuing education",
+                     "4"="Chemistry / Pharma",
+                     "5"="Electrical engineering",
+                     "6"="Energy/Water",
+                     "7"="Vehicle construction/suppliers",
+                     "8"="Finance/Insurance",
+                     "9"="Hospitality/Retail",
+                     "10"="Health/Social Care",
+                     "11"="Real estate/housing",
+                     "12"="Trading",
+                     "13"="Information technology / communication",
+                     "14"="Arts/Entertainment",
+                     "15"="Agriculture/Forestry",
+                     "16"="Mechanical engineering",
+                     "17"="Food industry",
+                     "18"="Traffic/Logistics/Transport",
+                     "19"="Other service industries",
+                     "20"="Other manufacturing industries",
+                     "21"="Other industries")
+replace2 <- c("E004_01"="Geeignete Angebote zur Beteiligung finden","E004_02"="Mitarbeitende zur Teilnahme gewinnen","E004_03"=" Koordination der Mitarbeitenden","E004_04"=" Begrenzte Zeit von Mitarbeitenden","E004_05"="Kosten des Programms","E004_06"=" Fehlende Unterstützung der Geschäftsführung","E004_07"="Sonstiges und zwar")
+merged_df$element.x <- replacement_map[as.character(merged_df$element.x)]
+merged_df$challenge <- replace2[merged_df$challenge]
+merged_df <- na.omit(merged_df)
+ggplot(merged_df)+
+  geom_bar(mapping = aes(x=element.x, fill=challenge), position = "fill")+
+   theme(axis.text.x = element_text(angle = 50, hjust = 1))+
+   theme(legend.text = element_text(size = 6))+
+  labs(x = "Industries", y = "Percent of companies") +
+  ggtitle("Distribution of volunteering challenges across industries") +
+  scale_fill_discrete(name = "Volunteering challenges:",
+  labels = c("Find suitable offers participation", 
+             "Get employees to participate", 
+             "Coordination of employees", 
+             "Limited time of employees", 
+             "Cost of the program", 
+             "Lack of support from management", 
+             "Other"))
+
+```
+```
