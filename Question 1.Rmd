@@ -1,0 +1,65 @@
+---
+title: "Question 1"
+author: "Daria Moiseeva"
+date: "2023-11-29"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Question 1}
+library(readxl)
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+# import the excel
+wholeSet <- read_excel("MUE.2022.for.LMU.xlsx")
+data <- wholeSet[, c(85, 6, 7, 8)]
+colnames(data) <- c("class", "activity1", "activity2", "activity3")
+
+# change the data into long term
+df_long <- data %>%
+  gather(key = "activity", value = "participation", activity1, activity2, activity3)
+
+# choose the data of ones that have participated the activity
+df_long <- df_long %>%
+  filter(participation == 1 | participation == 2)
+
+# caculate the percentage of each
+df_percentage <- df_long %>%
+  group_by(class, activity) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(class) %>%
+  mutate(percentage = count / sum(count))
+
+# translation of names of classes
+df_percentage <- df_percentage %>%
+  mutate(class = case_when(class == "Kleine Unternehmen" ~ "Small",
+                           class == "Mittlere Unternehmen" ~ "Middle",
+                           class == "Großunternehmen" ~ "Big"))
+# generate a gragh to reveal the percentage
+ggplot(df_percentage, aes(x = class, y = percentage, fill = activity)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("#F0E442", "#0072B2", "#D55E00"),
+    labels = c(
+      "Tackling specific issues",
+      "Free services",
+      "Release of employees"
+    )
+  ) +
+  labs(x = "Company Size", y = "Percent of companies", fill = "Type of activity") +
+  theme(title=element_text(size = 15),
+      axis.title = element_text(size = 14),
+      axis.text= element_text(colour="black", size = 12),
+      legend.text=element_text(size = 13),
+      legend.title=element_text(size = 14))+
+  ggtitle("Difference of corporate volunteering activities among 
+companies of different sizes") +
+  scale_y_continuous(labels = scales::percent_format())
+
+ggsave("1question.jpeg",device = "jpeg",width = 9,height = 6)
+```
