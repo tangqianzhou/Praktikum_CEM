@@ -1,0 +1,110 @@
+---
+title: "Question 4"
+author: "Daria Moiseeva"
+date: "2023-11-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+data<-read_excel("MUE.2022.for.LMU.xlsx")
+data
+data <- data %>% filter(!(E001 %in% c(-1, -9)))
+data$E001<-as.character(data$E001)
+data$E001 <- case_when(
+  data$E001 == 1 ~ "less than 25%",
+  data$E001 == 2 ~ "25-49%",
+  data$E001 == 3 ~ "50-74%",
+  data$E001 == 4 ~ "75% and more",
+  data$E001 == -1 ~ "Don't know",
+  data$E001 == -9 ~ "Not answered",
+  TRUE ~ "Other"
+  )
+service<-subset(data,A003 %in% c(1,3,8,9,10,11,14,18,19))
+service
+manufacturing<-subset(data,A003 %in% c(2,4,5,6,7,16,17,20))
+manufacturing
+all_categories <- data.frame(E001 = 
+                               factor(c("less than 25%", "25-49%", "50-74%", 
+                                        "75% and more"),
+                               levels=c("less than 25%", "25-49%", "50-74%",
+                                        "75% and more")))
+all_categories
+service_counts <- table(service$E001)
+service_counts
+manufacturing_counts <- table(manufacturing$E001)
+manufacturing_counts
+all_service_counts <- merge(all_categories, data.frame(E001 = names(service_counts), Count = as.numeric(service_counts)))
+all_service_counts[is.na(all_service_counts)]<-0
+all_service_counts
+all_manufacturing_counts <- merge(all_categories, data.frame(E001 = names(manufacturing_counts), Count = as.numeric(manufacturing_counts)))
+all_manufacturing_counts[is.na(all_manufacturing_counts)]<-0
+all_manufacturing_counts
+all_service_counts$E001<-factor(all_service_counts$E001,levels = c("less than 25%", "25-49%", "50-74%", "75% and more"))
+all_manufacturing_counts$E001<-factor(all_manufacturing_counts$E001,levels = c("Not answered","Don't know","less than 25%", "25-49%", "50-74%", "75% and more"))
+all_categories$E001<-factor(all_categories$E001)
+all_categories$E001
+all_service_counts<-na.omit(all_service_counts)
+all_service_counts
+all_manufacturing_counts<-na.omit(all_manufacturing_counts)
+all_manufacturing_counts
+n<-nrow(all_service_counts)
+new_order<-c(4,5,6,1,2,3)
+all_service_counts_new<-all_service_counts[new_order, ]
+all_service_counts_new
+all_manufacturing_counts_new<-all_manufacturing_counts[new_order, ]
+all_manufacturing_counts_new
+service_total <- nrow(service)
+manufacturing_total <- nrow(manufacturing)
+service_total
+manufacturing_total
+service_percentages <- prop.table(table(service$E001)) * 100
+manufacturing_percentages <- prop.table(table(manufacturing$E001)) * 100
+percentages_df <- data.frame(
+  Response = factor(names(service_percentages), levels = names(service_percentages)),
+  Service_Industry = as.numeric(service_percentages),
+  Manufacturing_Industry = as.numeric(manufacturing_percentages)
+)
+percentages_df <- percentages_df %>%
+  pivot_longer(cols = c("Service_Industry", "Manufacturing_Industry"), names_to = "Industry", values_to = "Percentage")
+order <- c("less than 25%", "25-49%", "50-74%", "75% and more")
+percentages_df$Response <- factor(percentages_df$Response, levels = order)
+percentages_df<-na.omit(percentages_df)
+percentages_df
+ggplot(percentages_df, aes(x = Response, y = Percentage, fill = Industry)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Percent of employees engaged in volunteering activity
+in the service industry versus the manufacturing industry",
+subtitle = "y-Axis: The percent of companies is given as a proportion of the 
+total number of compnies in their industry type",
+       x = "Percent of employees engaged",
+       y = "Percent of compsanies") +
+  theme_minimal() +
+  scale_fill_manual(name ="Industry type:", labels = c("Manufacturing","Service"),   values=c("#F0E442","#0072B2"))+
+theme(title=element_text(size = 15),axis.title = element_text(size = 14),axis.text= element_text(colour="black", size = 10), legend.text=element_text(size = 13),legend.title=element_text(size = 14))
+  
+ggsave("4.1question.jpeg",device = "jpeg",width = 9,height = 6)
+
+percentages_df%>%
+  filter(Response!="less than 25%",Response!="25-49%")%>%
+ggplot(aes(x = Response, y = Percentage, fill = Industry)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Percent of employees engaged in volunteering activity
+in the service industry versus the manufacturing industry",
+subtitle = "y-Axis: The percent of companies is given as a proportion of the 
+total number of compnies in their industry type",
+       x = "Percent of employees engaged",
+       y = "Percent of compsanies") +
+  theme_minimal() +
+  scale_fill_manual(name ="Industry type:", labels = c("Manufacturing","Service"),   values=c("#F0E442","#0072B2"))+
+theme(title=element_text(size = 15),axis.title = element_text(size = 14),axis.text= element_text(colour="black", size = 10), legend.text=element_text(size = 13),legend.title=element_text(size = 14))
+
+ggsave("4.2question.jpeg",device = "jpeg",width = 9,height = 6)
+```
