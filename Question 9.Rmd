@@ -1,0 +1,59 @@
+---
+title: "Question 9"
+author: "Daria Moiseeva"
+date: "2023-12-06"
+output: pdf_document
+---
+
+```{r}
+library(readxl)
+wholeSet <- read_excel("MUE.2022.for.LMU.xlsx")
+data <- wholeSet[, c(59, 72)]
+data <- na.omit(data) # delete rows with NA
+todelete <- c()
+for (i in 1:nrow(data)) {
+  if (-1 %in% data[i, 1] || -9 %in% data[i, 1]) {
+    todelete <- c(todelete, i)
+  }
+}
+df <- data[-todelete, ]
+
+colnames(df) <- c("engagement_category", "operation_time")
+#graph 1
+library(ggplot2)
+
+df$engagement_category <- factor(df$engagement_category, 
+                                 levels = c(1, 2, 3, 4),
+                                 labels = c("less than 25%", "25-49%", "50-74%", "75% and more"))
+ggplot(df, aes(x = as.factor(engagement_category), y = operation_time)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "Relationship Between Company Operation Time and Employee Engagement in Activities",
+       x = "Percentage of Employee Engagement in Activities",
+       y = "Company Operation Time") +
+  theme_minimal()
+#graph2
+library(dplyr)
+df <- df %>%
+  mutate(year_interval = case_when(
+    operation_time < 1800 ~ "<1800",
+    operation_time >= 1800 & operation_time < 1850 ~ "1800-1850",
+    operation_time >= 1850 & operation_time < 1900 ~ "1850-1900",
+    operation_time >= 1900 & operation_time < 1950 ~ "1900-1950",
+    operation_time >= 1950 & operation_time < 2000 ~ "1950-2000",
+    operation_time >= 2000 ~ ">2000"
+  )) %>%
+  mutate(year_interval = factor(year_interval, levels = c("<1800", "1800-1850", "1850-1900", "1900-1950", "1950-2000", ">2000")))
+
+ggplot(df, aes(x = year_interval, fill = factor(engagement_category))) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(title="The impact of duration of company's operation on it's commitment
+to corporate volunteering activity ",
+  subtitle = "Level of commitment is measured in % of employees engaged in volunteering",
+  x = "Year of foundation", y = "Percent of companies",
+  fill = "Percent of employees engaged") +
+  scale_fill_manual(values = c("#CC79A7","#F0E442", "#0072B2", "#D55E00"))+
+  theme(axis.text.x = element_text(colour="black",angle = 45, hjust = 1, size = 10), title=element_text(size = 14),axis.title = element_text(size = 14),axis.text.y= element_text(colour="black", size = 10), legend.text=element_text(size = 13),legend.title=element_text(size = 14))
+
+ggsave("9question.jpeg",device = "jpeg",width = 9,height = 6)
+```

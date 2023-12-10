@@ -1,0 +1,108 @@
+---
+title: "Question 3"
+author: "Daria Moiseeva"
+date: "2023-11-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(paletteer)
+
+# Read the Excel data file into a data frame
+data <- read_excel("MUE.2022.for.LMU.xlsx")
+
+# Select relevant columns: 'SERIAL', 'A003' (Industry), and 'E001' (Strength)
+dselect <- data %>% select(SERIAL, A003, E001)
+
+# Remove rows with missing values
+dselect <- na.omit(dselect)
+
+dselect <- dselect %>%
+  group_by(A003) %>%
+  mutate(n_companies = length(A003))%>%
+  group_by(A003,E001) %>%
+  mutate(n_frequency = length(E001)) %>%
+  group_by(A003,E001) %>%
+  mutate(percent = n_frequency / n_companies)
+dselect
+# Print the selected and cleaned data
+print(dselect)
+
+# Define mappings to replace numeric codes with descriptive industry names
+replace <- c("1"="Construction industry",
+             "2"="Mining / Metal",
+             "3"="Education / Further training",
+             "4"="Chemistry/Pharmacy",
+             "5"="Electrotechnology",
+             "6"="Energy / Water",
+             "7"="Vehicle construction/supplier",
+             "8"="Finance / Insurance", 
+             "9"="Hospitality / Retail",
+             "10"="Health / social services",
+             "11"="Real estate / housing",
+             "12"="Trade",
+             "13"="Information technology / communication",
+             "14"="Entertainment/Recreation",
+             "15"="Agriculture/Forestry",
+             "16"="Mechanical engineering",
+             "17"="Food industry",
+             "18"="Traffic / Logistics / Transportation",
+             "19"="Other service industries",
+             "20"="Other manufacturing industries",
+             "21"="Other")
+
+# Define mappings to replace numeric codes with descriptive strength categories
+replace2 <- c("1"="less than 25 %","2"="25-49 %","3"="50-74 %","4"="75 % and more")
+
+# Replace numeric codes with descriptive names in the 'A003' and 'E001' columns
+dselect$A003 <- replace[as.character(dselect$A003)]
+dselect$E001 <- replace2[as.character(dselect$E001)]
+
+# Remove rows with missing values again
+dselect <- na.omit(dselect)
+
+# Factorize the 'Strength' column with predefined levels
+dselect$E001 <- factor(dselect$E001, levels = c("less than 25 %", 
+                                                        "25-49 %", 
+                                                        "50-74 %", 
+                                                        "75 % and more"))
+dselect
+# Create a stacked bar plot using ggplot2
+ggplot(dselect, aes(x = A003, y = percent, fill = A003)) +
+  geom_col()+
+  facet_wrap(vars(E001),scales="free_y")+
+  theme(axis.text.x = element_text(colour="black",angle = 45, hjust = 1, size = 8),title=element_text(size = 15),axis.title = element_text(size = 14),axis.text.y= element_text(colour="black", size = 10), legend.text=element_text(size = 13),legend.title=element_text(size = 14))+
+  guides(fill = FALSE)+
+  scale_fill_manual(values=c("#5050FFFF", "#CE3D32FF", "#749B58FF", "#F0E685FF", "#466983FF",     "#BA6338FF", "#5DB1DDFF", "#802268FF", "#6BD76BFF", "#D595A7FF", "#924822FF", "#837B8DFF", "#C75127FF", "#D58F5CFF","#7A65A5FF", "#E4AF69FF", "#3B1B53FF", "#CDDEB7FF", "#612A79FF", "#AE1F63FF", "#E7C76FFF")) +
+  labs(title = "Commitment to corporate volunteering compared to the industry type",
+       subtitle = "Level of commitment is measured in % of employees engaged in volunteering",
+       x = "Industry",
+       y = "Percent of companies")
+
+ggsave("3.1question.jpeg",device = "jpeg",width = 9,height = 6)
+
+# this stacked bar only about bracket of "50-74 %", "75 % and more".
+dselect%>%
+  filter(E001!="less than 25 %",E001!="25-49 %")%>%
+ggplot(aes(x = A003, y = percent, fill = A003)) +
+  geom_col() +
+  facet_wrap(vars(E001),scales="free_y")+
+  theme(axis.text.x = element_text(colour="black",angle = 45, hjust = 1, size = 8),title=element_text(size = 15),axis.title = element_text(size = 14),axis.text.y= element_text(colour="black", size = 10), legend.text=element_text(size = 13),legend.title=element_text(size = 14))+
+  guides(fill = FALSE)+
+  scale_fill_manual(values=c("#5050FFFF", "#CE3D32FF", "#749B58FF", "#F0E685FF", "#466983FF",     "#BA6338FF", "#5DB1DDFF", "#802268FF", "#6BD76BFF", "#D595A7FF", "#924822FF", "#837B8DFF", "#C75127FF", "#D58F5CFF","#7A65A5FF", "#E4AF69FF", "#3B1B53FF", "#CDDEB7FF", "#612A79FF", "#AE1F63FF", "#E7C76FFF")) +
+  labs(title = "Commitment to corporate volunteering compared to the industry type",
+       subtitle = "Level of commitment is measured in % of employees engaged in volunteering",
+       x = "Industry",
+       y = "Percent of companies")
+
+ggsave("3.2question.jpeg",device = "jpeg",width = 9,height = 6)
+```
+

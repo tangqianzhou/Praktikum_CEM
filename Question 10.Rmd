@@ -1,0 +1,103 @@
+---
+title: "Question 10"
+author: "Daria Moiseeva"
+date: "2023-12-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+data<-read_excel("MUE.2022.for.LMU.xlsx")
+data1 <- data %>% filter(!(E001 %in% c(-1, -9)))
+selbstständig<-data1[data1$N004_01 == TRUE, ]
+craftcompany<-data1[data1$N004_02 == TRUE, ]
+mediumsizedcompany<-data1[data1$N004_03 == TRUE, ]
+familycompany<-data1[data1$N004_04 == TRUE, ]
+konzern<-data1[data1$N004_05 == TRUE, ]
+startup<-data1[data1$N004_06 == TRUE, ]
+foundationcompany<-data1[data1$N004_08 == TRUE, ]
+E001_selbstständig<-na.omit(selbstständig$E001)
+E001_craftcompany<-na.omit(craftcompany$E001)
+E001_mediumsizedcompany<-na.omit(mediumsizedcompany$E001)
+E001_familycompany<-na.omit(familycompany$E001)
+E001_konzern<-na.omit(konzern$E001)
+E001_startup<-na.omit(startup$E001)
+E001_foundationcompany<-na.omit(foundationcompany$E001)
+count_df <- data.frame(Company_Type = c("self-employed", "craft company", "medium sized company", "family company", "konzern", "start-up", "foundation company"),
+E001_1 = c(
+     sum(E001_selbstständig == 1),
+     sum(E001_craftcompany == 1),
+     sum(E001_mediumsizedcompany == 1),
+     sum(E001_familycompany == 1),
+     sum(E001_konzern == 1),
+     sum(E001_startup == 1),
+     sum(E001_foundationcompany == 1)
+   ),
+   E001_2 = c(
+     sum(E001_selbstständig == 2),
+     sum(E001_craftcompany == 2),
+     sum(E001_mediumsizedcompany == 2),
+     sum(E001_familycompany == 2),
+     sum(E001_konzern == 2),
+     sum(E001_startup == 2),
+     sum(E001_foundationcompany == 2)
+   ),
+   E001_3 = c(
+     sum(E001_selbstständig == 3),
+     sum(E001_craftcompany == 3),
+     sum(E001_mediumsizedcompany == 3),
+     sum(E001_familycompany == 3),
+     sum(E001_konzern == 3),
+     sum(E001_startup == 3),
+     sum(E001_foundationcompany == 3)
+   ),
+   E001_4 = c(
+     sum(E001_selbstständig == 4),
+     sum(E001_craftcompany == 4),
+     sum(E001_mediumsizedcompany == 4),
+     sum(E001_familycompany == 4),
+     sum(E001_konzern == 4),
+     sum(E001_startup == 4),
+     sum(E001_foundationcompany == 4)
+   )
+ )
+count_df
+count_df$Total <- rowSums(count_df[c("E001_1", "E001_2", "E001_3", "E001_4")])
+count_df$E001_1_percentage <- count_df$E001_1 / count_df$Total * 100
+count_df$E001_2_percentage <- count_df$E001_2 / count_df$Total * 100
+count_df$E001_3_percentage <- count_df$E001_3 / count_df$Total * 100
+count_df$E001_4_percentage <- count_df$E001_4 / count_df$Total * 100
+count_df
+plot_data <- count_df %>%
+  select(Company_Type, E001_1_percentage, E001_2_percentage, E001_3_percentage, E001_4_percentage) %>%
+  tidyr::gather(key = "E001_value", value = "Percentage", -Company_Type)
+library(viridis)
+library(ggplot2)
+ggplot(plot_data, aes(x = reorder(E001_value, Percentage, FUN = median), y = Percentage, fill = Company_Type)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Commitment to corporate volunteering activity compared to
+the self-image of the company",
+    subtitle = "Level of commitment is measured in % of employees engaged in volunteering",
+    x = "Percent of engaged employees",
+    y = "Percentage",
+    fill = "Company Type"
+  ) +
+  scale_x_discrete(labels = c("E001_1_percentage" = "less than 25%", "E001_2_percentage" = "25-49%", "E001_3_percentage" = "50-74%", "E001_4_percentage" = "75% and above")) +
+  scale_fill_viridis_d(option = "magma", begin = 0.2, end = 0.8) +  
+  theme(axis.text = element_text(colour="black",size = 12),
+        axis.title = element_text(size = 14),
+        title=element_text(size = 15),
+        legend.text=element_text(size = 13),
+        legend.title=element_text(size = 14))+
+  scale_fill_viridis(discrete = TRUE, option = "D") 
+
+ggsave("10question.jpeg",device = "jpeg",width = 9,height = 6)
+
+```
+#Answer:No, As can be seen in the graph, family companies do not participate more in volunteer activities. The frequency of family companies participating in volunteer activities is almost the same as that of companies except startups, and startups are the type of company that participates most frequently.
