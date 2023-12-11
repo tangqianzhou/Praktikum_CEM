@@ -27,7 +27,7 @@ data$E001 <- case_when(
   data$E001 == -9 ~ "Not answered",
   TRUE ~ "Other"
   )
-service<-subset(data,A003 %in% c(1,3,8,9,10,11,14,18,19))
+service<-subset(data,A003 %in% c(1,3,8,9,10,11,12,13,14,15,18,19))
 service
 manufacturing<-subset(data,A003 %in% c(2,4,5,6,7,16,17,20))
 manufacturing
@@ -78,6 +78,17 @@ order <- c("less than 25%", "25-49%", "50-74%", "75% and more")
 percentages_df$Response <- factor(percentages_df$Response, levels = order)
 percentages_df<-na.omit(percentages_df)
 percentages_df
+
+q4.2<- percentages_df%>%
+  filter(Response!="less than 25%",Response!="25-49%")%>%
+ggplot(aes(x = Response, y = Percentage, fill = Industry)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "x",
+       y = "y (%)") +
+  theme_minimal() +
+  scale_fill_manual(labels = c("Manufacturing","Service"),   values=c("#F0E442","#0072B2"))+
+  guides(fill=FALSE)
+
 ggplot(percentages_df, aes(x = Response, y = Percentage, fill = Industry)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Percent of employees engaged in volunteering activity
@@ -88,23 +99,8 @@ total number of compnies in their industry type",
        y = "Percent of compsanies") +
   theme_minimal() +
   scale_fill_manual(name ="Industry type:", labels = c("Manufacturing","Service"),   values=c("#F0E442","#0072B2"))+
-theme(title=element_text(size = 15),axis.title = element_text(size = 14),axis.text= element_text(colour="black", size = 10), legend.text=element_text(size = 13),legend.title=element_text(size = 14))
-  
-ggsave("4.1question.jpeg",device = "jpeg",width = 9,height = 6)
+theme(title=element_text(size = 15),axis.title = element_text(size = 14),axis.text= element_text(colour="black", size = 10), legend.text=element_text(size = 13),legend.title=element_text(size = 14))+
+  inset_element(q4.2,left = 0.5,bottom = 0.4, right = 0.9, top = 0.95)
 
-percentages_df%>%
-  filter(Response!="less than 25%",Response!="25-49%")%>%
-ggplot(aes(x = Response, y = Percentage, fill = Industry)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Percent of employees engaged in volunteering activity
-in the service industry versus the manufacturing industry",
-subtitle = "y-Axis: The percent of companies is given as a proportion of the 
-total number of compnies in their industry type",
-       x = "Percent of employees engaged",
-       y = "Percent of compsanies") +
-  theme_minimal() +
-  scale_fill_manual(name ="Industry type:", labels = c("Manufacturing","Service"),   values=c("#F0E442","#0072B2"))+
-theme(title=element_text(size = 15),axis.title = element_text(size = 14),axis.text= element_text(colour="black", size = 10), legend.text=element_text(size = 13),legend.title=element_text(size = 14))
-
-ggsave("4.2question.jpeg",device = "jpeg",width = 9,height = 6)
+ggsave("4question.jpeg",device = "jpeg",width = 9,height = 6)
 ```
