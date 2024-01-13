@@ -1,0 +1,58 @@
+```{r}
+library(readxl)
+data <- read_xlsx("MUE.2022.for.LMU.xlsx")
+data
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(ggplot2)
+library(gridExtra)
+library(patchwork)
+
+data.Q10 <- data %>%
+  select(SERIAL,E001,E002,N004_01:N004_08) %>%
+  filter(E001 > -1, E002 > -2) %>%
+  pivot_longer(cols=c(N004_01:N004_08),
+               names_to = "company_type",
+               values_to = "choice") %>%
+  mutate(company_type = case_when(company_type=="N004_01"~"independent",
+                                  company_type=="N004_02"~"handcraft",
+                                  company_type=="N004_03"~"medium class",
+                                  company_type=="N004_04"~"family company",
+                                  company_type=="N004_05"~"corporation",
+                                  company_type=="N004_06"~"start-up",
+                                  company_type=="N004_07"~"social enterprise",
+                                  company_type=="N004_08"~"foundation"))%>%
+  filter(choice != FALSE) %>%
+  group_by(company_type) %>%
+  mutate(n_companies_of_type = length(SERIAL)) %>%
+  group_by(company_type,E001) %>%
+  mutate(n_E001_of_type = length(SERIAL)) %>%
+  group_by(company_type,E001) %>%
+  mutate(percent_E001 = n_E001_of_type/n_companies_of_type)
+
+  ggplot(data.Q10, 
+       aes(x = E001, 
+           y = percent_E001, 
+           fill = company_type)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +  # Change here
+  scale_fill_brewer(name = "Self-concept:", palette = "Set3") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_x_continuous(breaks = c(1, 2, 3, 4),
+                     labels = c("less than 25%", "25-49%", "50-74%", "75% and more")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(colour = "black",
+                                   angle = 45,
+                                   hjust = 1,
+                                   size = 21),
+        title = element_text(size = 21),
+        axis.title = element_text(size = 21),
+        axis.text.y = element_text(colour = "black", size = 21),
+        legend.text = element_text(size = 21),
+        legend.title = element_text(size = 21)) +
+  labs(x = "Percent of volunteering employees",
+       y = "Percent of companies",
+       title = "Companies of different self-concepts compared by percent of engaged employees")+scale_y_continuous(labels = scales::percent_format(accuracy = 1))+coord_flip()
+  
+ggsave("10question.jpeg",device = "jpeg",width = 16,height = 9)
+```
