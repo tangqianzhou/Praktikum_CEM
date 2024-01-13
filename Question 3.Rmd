@@ -106,3 +106,91 @@ ggplot(aes(x = A003, y = percent, fill = A003)) +
 ggsave("3.2question.jpeg",device = "jpeg",width = 9,height = 6)
 ```
 
+```{r}
+library(readxl)
+library(dplyr)
+library(ggplot2)
+data <- read_excel("MUE.2022.for.LMU.xlsx")
+
+
+data.Q3 <- data %>%
+  select(SERIAL,A003,E001)%>%
+  # filter answers, that don't give any information about frequency of volunteering or industry type
+  filter(!is.na(A003),!is.na(E001)) %>%
+  filter(A003 > 0, E001 > -1) %>%
+  filter(A003 < 19) %>%
+  mutate(A003 = case_when(A003 == 1 ~ "Construction industry",
+             A003 == 2 ~"Mining / Metal",
+             A003 == 3 ~"Education / Further training",
+             A003 == 4 ~"Chemistry/Pharmacy",
+             A003 == 5 ~"Electrotechnology",
+             A003 == 6 ~"Energy / Water",
+             A003 == 7 ~"Vehicle construction/supplier",
+             A003 == 8 ~"Finance / Insurance", 
+            A003 == 9 ~"Hospitality / Retail",
+             A003 == 10 ~"Health / social services",
+             A003 == 11 ~"Real estate / housing",
+             A003 == 12 ~"Trade",
+             A003 == 13 ~"Information technology / communication",
+             A003 == 14 ~"Entertainment/Recreation",
+             A003 == 15 ~"Agriculture/Forestry",
+             A003 == 16 ~"Mechanical engineering",
+             A003 == 17 ~"Food industry",
+             A003 == 18 ~"Traffic / Logistics / Transportation"))%>%
+  mutate(companies_total = length(SERIAL)) %>%
+  group_by(A003) %>%
+  mutate(industry_total = length(SERIAL)) %>%
+  group_by(A003,E001) %>%
+  mutate(engagement_by_industry = length(SERIAL)) %>%
+# add a column with conditional relative frequency of the level of frequency of volunteering given the class of size of a company
+  group_by(A003,E001) %>%
+  mutate(percent = engagement_by_industry / industry_total)%>%
+  select(-SERIAL)%>%
+  distinct()
+  
+
+data.Q3 %>%
+  group_by(A003) %>%
+  arrange(E001, percent) %>%
+  ggplot(aes(x = percent,
+             y = reorder(A003, percent, FUN=max),
+             fill = factor(E001,levels = c(1,2,3,4),
+                           labels = c("less than 25%",
+                                      "25-49%",
+                                      "50-74%",
+                                      "75% and more")))) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_fill_brewer(palette = "YlGn") +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1))+
+  theme(title=element_text(size = 21),
+        axis.title = element_text(size = 21),
+        axis.text = element_text(colour="black",size = 21),
+        legend.text= element_text(size = 20),
+        legend.title=element_text(size = 21)) +
+  labs(x = "Percent of companies",
+       y = "Industry",
+       fill="Percent of employees engaged:")
+
+ggsave("3.1question.jpeg",device = "jpeg",width = 16,height = 9)
+
+data.Q3 %>%
+  filter(E001 > 2) %>%
+  ggplot(aes(x = percent,
+             y = reorder(A003, percent),
+             fill = factor(E001,levels = c(3,4),
+                           labels = c("50-74%",
+                                      "75% and more")))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_x_continuous(labels = scales::percent)+
+  scale_fill_manual(values=c("#78c679", "#238443")) +
+  theme(title=element_text(size = 21),
+        axis.title = element_text(size = 21),
+        axis.text = element_text(colour="black",size = 21),
+        legend.text= element_text(size = 20),
+        legend.title=element_text(size = 21)) +
+  labs(x = "Percent of companies",
+       y = "Industry",
+       fill="Percent of employees engaged:")
+
+ggsave("3.2question.jpeg",device = "jpeg",width = 16,height = 9)
+```
