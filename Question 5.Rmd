@@ -1,0 +1,160 @@
+---
+title: "Question 5"
+author: "Daria Moiseeva"
+date: "2023-11-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readxl)
+data <- read_xlsx("MUE.2022.for.LMU.xlsx")
+data
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(ggplot2)
+library(gridExtra)
+library(patchwork)
+
+```
+
+```{r Q5.1&2}
+
+data.Q5.1 <- data %>%
+  select(SERIAL,E002,region)%>%
+  filter(E002 > -2) %>%
+  filter(!is.na(E002)) %>%
+# add a column with marginal total for each region 
+  group_by(region) %>%
+  mutate(region_total = length(unique(SERIAL)))%>%
+# add a column with absolute frequencies for each case
+  group_by(region,E002) %>%
+  mutate(abs_frequency = length(unique(SERIAL))) %>%
+# add a column with conditional relative frequency of the level of frequency of volunteering given the region of a company
+  group_by(region,E002) %>%
+  mutate(rel_frequency = abs_frequency / region_total)%>%
+# leave only useful data
+  select(-SERIAL)%>%
+  distinct()%>%
+# rearrange the frequency levels acceding(from "irregular" 
+# to "more often than once a month")
+  mutate(E002 = case_when(E002 == -1 ~ 1,
+                          E002 == 1 ~ 5,
+                          E002 == 2 ~ 4,
+                          E002 == 3 ~ 3,
+                          E002 == 4 ~ 2))
+
+data.Q5.1
+
+ggplot(data.Q5.1,aes(x = reorder(region,rel_frequency,FUN=max), y=abs_frequency, fill=factor(E002, levels=c(1,2,3,4,5),labels=c("irregular","once a year",
+"once in a six months","once per quarter","more often than once a month")))) + 
+geom_bar(stat ="identity",position = "fill") +
+scale_fill_brewer(name ="Frequency of volunteering :",
+palette = "GnBu")+
+theme(axis.text.x = element_text(colour="black",angle = 45, hjust = 1, size = 13,face = "bold"),
+      title=element_text(size = 21),
+        axis.title = element_text(size = 21),
+        axis.text.y= element_text(colour="black", size = 21),
+        legend.text=element_text(size = 20),
+        legend.title=element_text(size = 20))+
+labs(x = "Region",
+     y = "Percent of companies",
+     title = "Companies of different regions compared by the frequency
+of volunteering")
+
+ggsave("5question.jpeg",device = "jpeg",width = 16,height = 9)
+
+data.Q5.2 <- data %>%
+  select(SERIAL,E001,region)%>%
+  filter(E001 > -1) %>%
+  filter(!is.na(E001)) %>%
+# add a column with marginal total for each region 
+  group_by(region) %>%
+  mutate(region_total = length(unique(SERIAL)))%>%
+# add a column with absolute frequencies for each case
+  group_by(region,E001) %>%
+  mutate(abs_frequency = length(unique(SERIAL))) %>%
+# add a column with conditional relative frequency of the level of frequency of volunteering given the region of a company
+  group_by(region,E001) %>%
+  mutate(rel_frequency = abs_frequency / region_total)%>%
+# leave only useful data
+  select(-SERIAL)%>%
+  distinct()
+
+data.Q5.2
+
+ggplot(data.Q5.2, aes(x = reorder(region,rel_frequency,FUN=max),
+                      y=abs_frequency,
+                      fill=factor(E001,levels = c(1,2,3,4),
+                                  labels = c("less than 25%", "25-49%",
+                                             "50-74%", "75% and more")))) + 
+geom_bar(stat ="identity",position = "fill") +
+scale_fill_brewer(name ="Percent of engaged employees :",
+                  palette = "YlGn")+
+theme(axis.text.x = element_text(colour="black",angle = 45, hjust = 1, size = 14,
+                                 face = "bold"),
+      title=element_text(size = 21),
+      axis.title = element_text(size = 21),
+      axis.text.y= element_text(colour="black", size = 21),
+      legend.text=element_text(size = 20),
+      legend.title=element_text(size = 21))+
+labs(x = "Region",
+     y = "Percent of companies",
+     title = "Companies of different regions compared by percent 
+of engaged employees")
+
+ggsave("5.1question.jpeg",device = "jpeg",width = 16,height = 9)
+"#238443"
+```
+
+
+```{r Q5.3}
+data.Q5.3 <- data %>%
+  select(SERIAL,c(D001_01:D001_12),region) %>%
+  pivot_longer(cols=c(D001_01:D001_12),
+               names_to = "branch_name",
+               values_to = "choice") %>%
+  mutate(branch_name=case_when(branch_name == "D001_01" ~ "Art and culture",
+                               branch_name == "D001_02" ~ "Sport",
+                               branch_name == "D001_03" ~ "Leisure and sociability",
+                               branch_name == "D001_04" ~ "Science and research",
+                               branch_name == "D001_05" ~ "Education and further
+training",
+                               branch_name == "D001_06" ~ "Health",
+                               branch_name == "D001_07" ~ "Social affairs",
+                               branch_name == "D001_08" ~ "Population/disaster
+protection",
+                               branch_name == "D001_09" ~ "Climate and environmental
+protection",
+                               branch_name == "D001_10" ~ "Development cooperation",
+                               branch_name == "D001_11" ~ "Church and religion",
+                               branch_name == "D001_12" ~ "Other areas")) %>%
+  filter(choice != FALSE) %>%
+  mutate(companies_in_total=length(unique(SERIAL))) %>%
+  group_by(region,branch_name) %>%
+  mutate(companies_of_type = length(SERIAL))%>%
+  group_by(region,branch_name) %>%
+  mutate(percent = companies_of_type/companies_in_total)
+
+data.Q5.3
+
+ggplot(data.Q5.3, aes(x = percent,
+                      y = reorder(branch_name,percent),
+                      fill = region)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_viridis_d(option = "H") +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1, scale = 1))+
+  theme_minimal()+
+  theme(title=element_text(size = 21),
+        axis.title = element_text(size = 21),
+        axis.text = element_text(colour="black",size = 21),
+        legend.text= element_text(size = 20),
+        legend.title=element_text(size = 21)) +
+  labs(x = "Percent of companies",
+       y = "Branch of volunteering",
+       fill="Region:")
+
+ggsave("5.2question.jpeg",device = "jpeg",width = 16,height = 9)
+```
